@@ -1,7 +1,7 @@
 import 'dart:io';
-import 'package:blogapp/models/api_response.dart';
-import 'package:blogapp/models/user.dart';
-import 'package:blogapp/services/user_service.dart';
+import 'package:perak_novelixir/models/api_response.dart';
+import 'package:perak_novelixir/models/user.dart';
+import 'package:perak_novelixir/services/user_service.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
