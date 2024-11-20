@@ -4,13 +4,15 @@ import '../models/book.dart'; // Import model untuk Book dan Chapter
 class ReadPage extends StatelessWidget {
   final List<Chapter> chapters;
   final int currentChapterIndex;
-  final String author; // Parameter untuk author
+  final String author;
+  final String coverUrl; // Tambahkan parameter untuk URL gambar buku
 
   const ReadPage({
     Key? key,
     required this.chapters,
     required this.currentChapterIndex,
-    required this.author, // Wajib diberikan saat memanggil halaman
+    required this.author,
+    required this.coverUrl, // Wajib diberikan saat memanggil halaman
   }) : super(key: key);
 
   @override
@@ -42,6 +44,27 @@ class ReadPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Tambahkan gambar buku
+            Center(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  coverUrl,
+                  height: 200,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 200,
+                      color: Colors.grey,
+                      child: const Center(
+                        child: Icon(Icons.broken_image, color: Colors.white),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 16), // Jarak antara gambar dan judul
             Text(
               currentChapter.title,
               style: const TextStyle(
@@ -55,7 +78,7 @@ class ReadPage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "Author: $author", // Menggunakan parameter author
+                  "Author: $author",
                   style: TextStyle(
                     color: Colors.grey[400],
                     fontSize: 14,
@@ -100,7 +123,8 @@ class ReadPage extends StatelessWidget {
                             builder: (context) => ReadPage(
                               chapters: chapters,
                               currentChapterIndex: currentChapterIndex - 1,
-                              author: author, // Pastikan parameter diteruskan
+                              author: author,
+                              coverUrl: coverUrl,
                             ),
                           ),
                         );
@@ -122,7 +146,8 @@ class ReadPage extends StatelessWidget {
                             builder: (context) => ReadPage(
                               chapters: chapters,
                               currentChapterIndex: currentChapterIndex + 1,
-                              author: author, // Pastikan parameter diteruskan
+                              author: author,
+                              coverUrl: coverUrl,
                             ),
                           ),
                         );

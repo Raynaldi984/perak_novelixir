@@ -1,4 +1,4 @@
-import 'package:blogapp/screens/profile.dart';
+import 'package:perak_novelixir/screens/profile.dart';
 import 'package:flutter/material.dart';
 // Pastikan halaman loading ada
 // Impor halaman Home

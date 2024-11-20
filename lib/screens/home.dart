@@ -1,15 +1,19 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import '../models/book.dart';
-import '../widgets/book_card.dart';
+import '../constant.dart';
+import './read_page.dart'; // Import the ReadPage
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import '../screens/login.dart'; // Import halaman Login
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
-
+class Home extends StatefulWidget {
   @override
-  _HomePageState createState() => _HomePageState();
+  _HomeState createState() => _HomeState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomeState extends State<Home> {
   late Future<List<Book>> _futureBooks;
 
   @override
@@ -18,128 +22,50 @@ class _HomePageState extends State<HomePage> {
     _futureBooks = fetchBooks();
   }
 
-  static Future<List<Book>> fetchBooks() async {
-    // Simulasi data buku dengan chapters
-    return [
-      Book(
-        title: 'To Kill a Mockingbird',
-        author: 'Harper Lee',
-        coverUrl: 'https://covers.openlibrary.org/b/id/8225261-L.jpg',
-        chapters: [
-          Chapter(
-            number: 1,
-            title: 'Chapter 1: The Beginning',
-            content: 'When he was nearly thirteen, my brother Jem got his arm badly broken at the elbow...',
-            reads: 1500,
-            votes: 350,
-          ),
-          Chapter(
-            number: 2,
-            title: 'Chapter 2: School Days',
-            content: 'The next morning I awoke to find that summer had turned to autumn overnight...',
-            reads: 1200,
-            votes: 280,
-          ),
-        ],
-      ),
-      Book(
-        title: '1984',
-        author: 'George Orwell',
-        coverUrl: 'https://covers.openlibrary.org/b/id/7222246-L.jpg',
-        chapters: [
-          Chapter(
-            number: 1,
-            title: 'Chapter 1: Big Brother',
-            content: 'It was a bright cold day in April, and the clocks were striking thirteen...',
-            reads: 2000,
-            votes: 450,
-          ),
-          Chapter(
-            number: 2,
-            title: 'Chapter 2: The Party',
-            content: 'Winston picked his way up the lane through dappled light and shade...',
-            reads: 1800,
-            votes: 400,
-          ),
-        ],
-      ),
-      Book(
-        title: 'The Great Gatsby',
-        author: 'F. Scott Fitzgerald',
-        coverUrl: 'https://covers.openlibrary.org/b/id/7359398-L.jpg',
-        chapters: [
-          Chapter(
-            number: 1,
-            title: 'Chapter 1: The Introduction',
-            content: 'In my younger and more vulnerable years my father gave me some advice...',
-            reads: 2500,
-            votes: 600,
-          ),
-          Chapter(
-            number: 2,
-            title: 'Chapter 2: The Party',
-            content: 'About halfway between West Egg and New York...',
-            reads: 2200,
-            votes: 550,
-          ),
-        ],
-      ),
-      Book(
-        title: 'Pride and Prejudice',
-        author: 'Jane Austen',
-        coverUrl: 'https://covers.openlibrary.org/b/id/8225231-L.jpg',
-        chapters: [
-          Chapter(
-            number: 1,
-            title: 'Chapter 1: A Truth Universally Acknowledged',
-            content: 'It is a truth universally acknowledged, that a single man in possession of a good fortune...',
-            reads: 3000,
-            votes: 750,
-          ),
-          Chapter(
-            number: 2,
-            title: 'Chapter 2: The Bennets',
-            content: 'Mr. Bennet was among the earliest of those who waited on Mr. Bingley...',
-            reads: 2800,
-            votes: 700,
-          ),
-        ],
-      ),
-    ];
+  Future<List<Book>> fetchBooks() async {
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+      if (response.statusCode == 200) {
+        List<dynamic> data = json.decode(response.body);
+        return data.map((bookData) => Book.fromJson(bookData)).toList();
+      } else {
+        throw Exception('Failed to load books: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Failed to load books: $e');
+    }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[900],
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              floating: true,
-              title: Row(
-                children: [
-                  Image.network(
-                    'https://www.wattpad.com/img/logo.png',
-                    height: 30,
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.notifications),
-                    onPressed: () {},
-                    color: Colors.white,
-                  ),
-                ],
-              ),
-              backgroundColor: Colors.grey[850],
-            ),
-            SliverToBoxAdapter(child: _buildFeaturedStory()),
-            SliverToBoxAdapter(child: _buildTrendingSection()),
-            SliverToBoxAdapter(child: _buildStoriesForYouSection()),
-          ],
-        ),
-      ),
+  Future<void> logout() async {
+    SharedPreferences pref = await SharedPreferences.getInstance();
+    await pref.clear(); // Hapus semua data pengguna
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => Login()),
+      (route) => false,
     );
+  }
+
+  void navigateToReadPage(BuildContext context, Book book) {
+    if (book.chapters.isNotEmpty) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ReadPage(
+            chapters: book.chapters,
+            currentChapterIndex: 0, // Start with the first chapter
+            author: book.author,
+            coverUrl: book.coverUrl, // Add the required coverUrl parameter
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No chapters available for this book'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Widget _buildFeaturedStory() {
@@ -191,27 +117,29 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildTrendingSection() {
+  Widget _buildStoriesSection(String title, Future<List<Book>> booksFuture) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Text(
-            'Trending Stories',
-            style: TextStyle(
-              color: Colors.white,
+            title,
+            style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
+              color: Colors.white,
             ),
           ),
         ),
-        const SizedBox(height: 16),
         FutureBuilder<List<Book>>(
-          future: _futureBooks,
+          future: booksFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return _buildSkeletonLoader();
+              return SizedBox(
+                height: 200,
+                child: Center(child: CircularProgressIndicator()),
+              );
             } else if (snapshot.hasError) {
               return Center(child: Text('Error: ${snapshot.error}'));
             } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -222,17 +150,48 @@ class _HomePageState extends State<HomePage> {
                 height: 200,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: books.length,
                   itemBuilder: (context, index) {
                     final book = books[index];
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: BookCard(
-                        title: book.title,
-                        author: book.author,
-                        coverUrl: book.coverUrl,
-                        chapters: book.chapters,
+                    return GestureDetector(
+                      onTap: () => navigateToReadPage(context, book),
+                      child: Container(
+                        width: 140,
+                        margin: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(
+                                book.coverUrl,
+                                fit: BoxFit.cover,
+                                width: 140,
+                                height: 140,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              book.title,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              book.author,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   },
@@ -245,82 +204,26 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildStoriesForYouSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          child: Text(
-            'Stories for You',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Home'),
+        backgroundColor: Colors.grey[850],
+        actions: [
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: logout, // Panggil fungsi logout saat tombol ditekan
           ),
-        ),
-        const SizedBox(height: 16),
-        FutureBuilder<List<Book>>(
-          future: _futureBooks,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return _buildSkeletonLoader();
-            } else if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
-            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return const Center(child: Text('No data available'));
-            } else {
-              final books = snapshot.data!;
-              return SizedBox(
-                height: 200,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: books.length,
-                  itemBuilder: (context, index) {
-                    final book = books[index];
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: BookCard(
-                        title: book.title,
-                        author: book.author,
-                        coverUrl: book.coverUrl,
-                        chapters: book.chapters,
-                      ),
-                    );
-                  },
-                ),
-              );
-            }
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSkeletonLoader() {
-    return SizedBox(
-      height: 200,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: 5,
-        itemBuilder: (context, index) {
-          return Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: Container(
-              width: 150,
-              height: 200,
-              color: Colors.grey[800],
-              child: const Center(
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          );
-        },
+        ],
+      ),
+      backgroundColor: Colors.grey[900],
+      body: ListView(
+        children: [
+          _buildFeaturedStory(),
+          _buildStoriesSection('Picked for You', _futureBooks),
+          _buildStoriesSection('Trending Novels', _futureBooks),
+        ],
       ),
     );
   }

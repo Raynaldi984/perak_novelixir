@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:blogapp/constant.dart';
-import 'package:blogapp/models/api_response.dart';
-import 'package:blogapp/models/user.dart';
+import 'package:perak_novelixir/constant.dart';
+import 'package:perak_novelixir/models/api_response.dart';
+import 'package:perak_novelixir/models/user.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 

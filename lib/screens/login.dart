@@ -1,143 +1,153 @@
+import 'package:blogapp/models/api_response.dart';
+import 'package:blogapp/models/user.dart';
+import 'package:blogapp/services/user_service.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class LoginPage extends StatelessWidget {
-  const LoginPage({Key? key}) : super(key: key);
+import 'home.dart';
+import 'register.dart';
+
+class Login extends StatefulWidget {
+  @override
+  _LoginState createState() => _LoginState();
+}
+
+class _LoginState extends State<Login> {
+  final GlobalKey<FormState> formkey = GlobalKey<FormState>();
+  TextEditingController txtEmail = TextEditingController();
+  TextEditingController txtPassword = TextEditingController();
+  bool loading = false;
+
+  void _loginUser() async {
+    ApiResponse response = await login(txtEmail.text, txtPassword.text);
+    if (response.error == null) {
+      _saveAndRedirectToHome(response.data as User);
+    } else {
+      setState(() {
+        loading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${response.error}')),
+      );
+    }
+  }
+
+  void _saveAndRedirectToHome(User user) async {
+    SharedPreferences pref = await SharedPreferences.getInstance();
+    await pref.setString('token', user.token ?? '');
+    await pref.setInt('userId', user.id ?? 0);
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => Home()),
+      (route) => false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final TextEditingController usernameController = TextEditingController();
-    final TextEditingController passwordController = TextEditingController();
-
     return Scaffold(
-      backgroundColor: Colors.grey[900],
-      appBar: AppBar(
-        title: const Text('Login'),
-        backgroundColor: Colors.grey[850],
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+      backgroundColor: Colors.grey[900], // Latar belakang gelap seperti Home
+      body: Form(
+        key: formkey,
+        child: ListView(
+          padding: EdgeInsets.all(32),
+          children: [
+            // Tambahkan gambar logo
+            Center(
+              child: Image.asset(
+                'assets/logo.png', // Path gambar
+                height: 100, // Atur tinggi gambar
+                fit: BoxFit.contain,
+              ),
+            ),
+            SizedBox(height: 32), // Jarak antara logo dan form
+            TextFormField(
+              keyboardType: TextInputType.emailAddress,
+              controller: txtEmail,
+              validator: (val) => val!.isEmpty ? 'Invalid email address' : null,
+              decoration: InputDecoration(
+                labelText: 'Email',
+                labelStyle: TextStyle(color: Colors.white70),
+                filled: true,
+                fillColor: Colors.grey[800],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              style: TextStyle(color: Colors.white),
+            ),
+            SizedBox(height: 20),
+            TextFormField(
+              controller: txtPassword,
+              obscureText: true,
+              validator: (val) =>
+                  val!.length < 6 ? 'Required at least 6 chars' : null,
+              decoration: InputDecoration(
+                labelText: 'Password',
+                labelStyle: TextStyle(color: Colors.white70),
+                filled: true,
+                fillColor: Colors.grey[800],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              style: TextStyle(color: Colors.white),
+            ),
+            SizedBox(height: 20),
+            loading
+                ? Center(child: CircularProgressIndicator())
+                : ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    onPressed: () {
+                      if (formkey.currentState!.validate()) {
+                        setState(() {
+                          loading = true;
+                          _loginUser();
+                        });
+                      }
+                    },
+                    child: Text(
+                      'Login',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Logo image
-                Image.asset(
-                  'assets/logo.png', // Gambar logo
-                  height: 120, // Sesuaikan ukuran gambar
-                  width: 120,
+                Text(
+                  "Don't have an account? ",
+                  style: TextStyle(color: Colors.white70),
                 ),
-                const SizedBox(height: 32), // Jarak antara gambar dan form
-
-                // Username field
-                TextField(
-                  controller: usernameController,
-                  decoration: InputDecoration(
-                    hintText: 'Username',
-                    hintStyle: TextStyle(color: Colors.grey[400]),
-                    filled: true,
-                    fillColor: Colors.grey[850],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                  style: const TextStyle(color: Colors.white),
-                ),
-                const SizedBox(height: 16),
-
-                // Password field
-                TextField(
-                  controller: passwordController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    hintText: 'Password',
-                    hintStyle: TextStyle(color: Colors.grey[400]),
-                    filled: true,
-                    fillColor: Colors.grey[850],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                  style: const TextStyle(color: Colors.white),
-                ),
-                const SizedBox(height: 24),
-
-                // Login Button
-                ElevatedButton(
-                  onPressed: () {
-                    final username = usernameController.text.isEmpty
-                        ? 'Guest'
-                        : usernameController.text;
-                    final password = passwordController.text;
-
-                    if (password.isEmpty) {
-                      // Show an error message if password is empty
-                      showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Error'),
-                          content: const Text('Password cannot be empty.'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text('OK'),
-                            ),
-                          ],
-                        ),
-                      );
-                    } else {
-                      // Navigate to home page with the username
-                      Navigator.pushReplacementNamed(
-                        context,
-                        '/home',
-                        arguments: {'username': username},
-                      );
-                    }
+                GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (context) => Register()),
+                      (route) => false,
+                    );
                   },
-                  child: const Text('Login'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 16,
+                  child: Text(
+                    'Register',
+                    style: TextStyle(
+                      color: Colors.orange,
+                      fontWeight: FontWeight.bold,
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    textStyle: const TextStyle(fontSize: 16),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Forgot password link
-                TextButton(
-                  onPressed: () {
-                    // Action for forgot password
-                    Navigator.pushNamed(context, '/forgotPassword');
-                  },
-                  child: const Text(
-                    'Forgot Password?',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-
-                // Sign Up link
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () {
-                    // Navigate to Sign Up page
-                    Navigator.pushNamed(context, '/signup');
-                  },
-                  child: const Text(
-                    'Don\'t have an account? Sign Up',
-                    style: TextStyle(color: Colors.orange),
                   ),
                 ),
               ],
             ),
-          ),
+          ],
         ),
       ),
     );

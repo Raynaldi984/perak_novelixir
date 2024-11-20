@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/book.dart';
-import '../pages/read_page.dart';
+import '../screens/read_page.dart';
 
 class BookCard extends StatelessWidget {
   final String title;
@@ -28,6 +28,7 @@ class BookCard extends StatelessWidget {
                 chapters: chapters,
                 currentChapterIndex: 0,
                 author: author,
+                coverUrl: coverUrl,
               ),
             ),
           );
@@ -35,85 +36,103 @@ class BookCard extends StatelessWidget {
       },
       child: SizedBox(
         width: 120,
-        height: 200, // Fixed height to match parent container
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.grey[850],
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 4,
-                offset: const Offset(2, 2),
-              ),
-            ],
+        height: 200,
+        child: _buildCard(),
+      ),
+    );
+  }
+
+  Widget _buildCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[850],
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 4,
+            offset: const Offset(2, 2),
           ),
-          child: Column(
-            children: [
-              // Cover Image - Using Expanded to fill available space
-              Expanded(
-                flex: 4, // Flex to control space distribution
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(8),
-                  ),
-                  child: Image.network(
-                    coverUrl,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      color: Colors.grey[700],
-                      child: const Center(
-                        child: Icon(
-                          Icons.broken_image,
-                          color: Colors.grey,
-                          size: 32,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              // Book Info Container - Smaller flex for book info
-              Expanded(
-                flex: 2,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Title
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                          height: 1.2,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      // Author
-                      Text(
-                        author,
-                        style: TextStyle(
-                          color: Colors.grey[400],
-                          fontSize: 11,
-                          height: 1.2,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          _buildCoverImage(),
+          _buildBookInfo(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCoverImage() {
+    return Expanded(
+      flex: 4,
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+        child: Image.network(
+          coverUrl,
+          width: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => _buildImageError(),
         ),
       ),
+    );
+  }
+
+  Widget _buildImageError() {
+    return Container(
+      color: Colors.grey[700],
+      child: const Center(
+        child: Icon(
+          Icons.broken_image,
+          color: Colors.grey,
+          size: 32,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBookInfo() {
+    return Expanded(
+      flex: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildTitle(),
+            const SizedBox(height: 2),
+            _buildAuthor(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTitle() {
+    return Text(
+      title,
+      style: const TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.bold,
+        fontSize: 12,
+        height: 1.2,
+      ),
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+
+  Widget _buildAuthor() {
+    return Text(
+      author,
+      style: TextStyle(
+        color: Colors.grey[400],
+        fontSize: 11,
+        height: 1.2,
+      ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
     );
   }
 }
