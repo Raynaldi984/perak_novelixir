@@ -29,6 +29,7 @@ class BookCard extends StatelessWidget {
                 currentChapterIndex: 0,
                 author: author,
                 coverUrl: coverUrl,
+                bookTitle: title,
               ),
             ),
           );
