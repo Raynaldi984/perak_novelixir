@@ -54,7 +54,8 @@ class _HomeState extends State<Home> {
             chapters: book.chapters,
             currentChapterIndex: 0, // Start with the first chapter
             author: book.author,
-            coverUrl: book.coverUrl, // Add the required coverUrl parameter
+            coverUrl: book.coverUrl,
+            bookTitle: book.title, // Add the required coverUrl parameter
           ),
         ),
       );
@@ -81,8 +82,8 @@ class _HomeState extends State<Home> {
           Positioned.fill(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                'https://via.placeholder.com/400x200',
+              child: Image.asset(
+                'assets/featured.png', // Gunakan gambar dari folder aset
                 fit: BoxFit.cover,
               ),
             ),

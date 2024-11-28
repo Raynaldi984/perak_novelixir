@@ -46,4 +46,6 @@ class Chapter {
     required this.reads,
     required this.votes,
   });
+
+  get updatedAt => null;
 }
