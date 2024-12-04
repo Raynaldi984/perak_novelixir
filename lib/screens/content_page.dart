@@ -1,21 +1,53 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import '../models/book.dart'; // Import model untuk Book dan Chapter
 
-class ContentPage extends StatelessWidget {
+class ContentPage extends StatefulWidget {
   final List<Chapter> chapters;
   final int currentChapterIndex;
-  final String author; // Tambahkan parameter author
+  final String author;
 
   const ContentPage({
     Key? key,
     required this.chapters,
     required this.currentChapterIndex,
-    required this.author, // Wajib diberikan saat memanggil halaman ini
+    required this.author,
   }) : super(key: key);
 
   @override
+  _ContentPageState createState() => _ContentPageState();
+}
+
+class _ContentPageState extends State<ContentPage> {
+  final FlutterTts _flutterTts = FlutterTts();
+  bool isReading = false;
+
+  @override
+  void dispose() {
+    _flutterTts.stop();
+    super.dispose();
+  }
+
+  Future<void> _toggleReadAloud(String text) async {
+    if (isReading) {
+      await _flutterTts.stop();
+      setState(() {
+        isReading = false;
+      });
+    } else {
+      await _flutterTts.setSpeechRate(0.5); // Kecepatan membaca
+      await _flutterTts.setPitch(1.0); // Nada suara
+      await _flutterTts.setLanguage("en-US"); // Bahasa
+      await _flutterTts.speak(text);
+      setState(() {
+        isReading = true;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final currentChapter = chapters[currentChapterIndex];
+    final currentChapter = widget.chapters[widget.currentChapterIndex];
 
     return Scaffold(
       backgroundColor: Colors.grey[900],
@@ -28,6 +60,10 @@ class ContentPage extends StatelessWidget {
             onPressed: () {
               // Implement font size adjustment
             },
+          ),
+          IconButton(
+            icon: Icon(isReading ? Icons.stop : Icons.volume_up),
+            onPressed: () => _toggleReadAloud(currentChapter.content),
           ),
           IconButton(
             icon: const Icon(Icons.more_vert),
@@ -55,7 +91,7 @@ class ContentPage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "Author: $author", // Menggunakan parameter author
+                  "Author: ${widget.author}",
                   style: TextStyle(
                     color: Colors.grey[400],
                     fontSize: 14,
@@ -92,16 +128,16 @@ class ContentPage extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.arrow_back_ios),
                 color: Colors.white,
-                onPressed: currentChapterIndex > 0
+                onPressed: widget.currentChapterIndex > 0
                     ? () {
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
                             builder: (context) => ContentPage(
-                              chapters: chapters,
-                              currentChapterIndex: currentChapterIndex - 1,
-                              author:
-                                  author, // Pastikan parameter author diteruskan
+                              chapters: widget.chapters,
+                              currentChapterIndex:
+                                  widget.currentChapterIndex - 1,
+                              author: widget.author,
                             ),
                           ),
                         );
@@ -109,27 +145,28 @@ class ContentPage extends StatelessWidget {
                     : null,
               ),
               Text(
-                'Chapter ${currentChapter.number} of ${chapters.length}',
+                'Chapter ${currentChapter.number} of ${widget.chapters.length}',
                 style: TextStyle(color: Colors.grey[400]),
               ),
               IconButton(
                 icon: const Icon(Icons.arrow_forward_ios),
                 color: Colors.white,
-                onPressed: currentChapterIndex < chapters.length - 1
-                    ? () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ContentPage(
-                              chapters: chapters,
-                              currentChapterIndex: currentChapterIndex + 1,
-                              author:
-                                  author, // Pastikan parameter author diteruskan
-                            ),
-                          ),
-                        );
-                      }
-                    : null,
+                onPressed:
+                    widget.currentChapterIndex < widget.chapters.length - 1
+                        ? () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ContentPage(
+                                  chapters: widget.chapters,
+                                  currentChapterIndex:
+                                      widget.currentChapterIndex + 1,
+                                  author: widget.author,
+                                ),
+                              ),
+                            );
+                          }
+                        : null,
               ),
             ],
           ),

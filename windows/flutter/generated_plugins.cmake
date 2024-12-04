@@ -4,12 +4,9 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   file_selector_windows
-<<<<<<< Updated upstream
-=======
   flutter_secure_storage_windows
   flutter_tts
   local_auth_windows
->>>>>>> Stashed changes
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
