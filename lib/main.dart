@@ -1,12 +1,10 @@
-import 'package:perak_novelixir/screens/profile.dart';
 import 'package:flutter/material.dart';
-// Pastikan halaman loading ada
-// Impor halaman Home
 import 'screens/home.dart';
-import 'screens/search.dart'; // Impor halaman Search
-import 'screens/write.dart'; // Impor halaman Write
-import 'screens/library.dart'; // Impor halaman Library
-// Impor halaman Profile
+import 'screens/search.dart';
+import 'screens/write.dart';
+import 'screens/library.dart';
+import 'screens/profile.dart';
+import 'widgets/bottom_nav_bar.dart'; // Impor BottomNavBar
 
 void main() {
   runApp(App());
@@ -29,50 +27,35 @@ class MainNavigator extends StatefulWidget {
 
 class _MainNavigatorState extends State<MainNavigator> {
   int _selectedIndex = 0;
-  List<Widget>? _pages;
+  bool _isLoggedIn = true; // Status login, misalnya true setelah login
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_pages == null) {
-      _pages = [
-        Home(), // Ganti dengan widget dari home.dart
-        const SearchPage(),
-        const WritePage(),
-        const LibraryPage(),
-        Profile(),
-      ];
-    }
-  }
+  final List<Widget> _pages = [
+    Home(),
+    const SearchPage(),
+    const WritePage(),
+    const LibraryPage(),
+    Profile(),
+  ];
 
   @override
   Widget build(BuildContext context) {
-    if (_pages == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
     return Scaffold(
-      body: _pages![_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.grey[850],
-        selectedItemColor: Colors.orange,
-        unselectedItemColor: Colors.grey,
-        currentIndex: _selectedIndex,
-        onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-          BottomNavigationBarItem(icon: Icon(Icons.edit), label: 'Write'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.library_books), label: 'Library'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        ],
+      appBar: AppBar(
+        title: const Text('Novelixir'),
       ),
+      body: _isLoggedIn
+          ? _pages[_selectedIndex]
+          : Center(child: CircularProgressIndicator()),
+      bottomNavigationBar: _isLoggedIn
+          ? BottomNavBar(
+              selectedIndex: _selectedIndex,
+              onItemSelected: (index) {
+                setState(() {
+                  _selectedIndex = index;
+                });
+              },
+            )
+          : null, // Menampilkan navbar hanya jika login
     );
   }
 }

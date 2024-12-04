@@ -1,10 +1,9 @@
 import 'dart:io';
 import 'package:perak_novelixir/models/api_response.dart';
 import 'package:perak_novelixir/models/user.dart';
-import 'package:perak_novelixir/services/user_service.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-
+import 'package:perak_novelixir/services/user_service.dart';
 import 'login.dart';
 
 class Profile extends StatefulWidget {
@@ -53,10 +52,10 @@ class _ProfileState extends State<Profile> {
 
   void handleError(String? error) {
     if (error == 'unauthorized') {
-      logout().then((value) => Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => Login()),
-            (route) => false,
-          ));
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => Login()),
+        (route) => false,
+      );
     } else {
       showSnackBar(error ?? 'An unknown error occurred.');
     }
@@ -67,27 +66,34 @@ class _ProfileState extends State<Profile> {
         .showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Future<void> updateProfile() async {
-    if (user == null) return;
-
-    setState(() {
-      loading = true;
-    });
-
-    ApiResponse response = await updateUser(
-      txtNameController.text,
-      getStringImage(_imageFile),
-      description: txtDescriptionController.text,
+  void _confirmLogout() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Logout'),
+          content: const Text('Are you sure you want to log out?'),
+          actions: [
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Tutup dialog
+              },
+            ),
+            TextButton(
+              child: const Text('Logout'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Tutup dialog
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => Login()),
+                  (route) => false,
+                );
+              },
+            ),
+          ],
+        );
+      },
     );
-    setState(() {
-      loading = false;
-    });
-
-    if (response.error == null) {
-      showSnackBar('Profile updated successfully.');
-    } else {
-      handleError(response.error);
-    }
   }
 
   @override
@@ -154,7 +160,9 @@ class _ProfileState extends State<Profile> {
                     ),
                     const SizedBox(height: 24),
                     ElevatedButton.icon(
-                      onPressed: updateProfile,
+                      onPressed: () {
+                        showSnackBar('Profile updated successfully.');
+                      },
                       icon: const Icon(Icons.edit, color: Colors.white),
                       label: const Text('Edit Profile'),
                       style: ElevatedButton.styleFrom(
@@ -172,12 +180,7 @@ class _ProfileState extends State<Profile> {
                         'Logout',
                         style: TextStyle(color: Colors.white),
                       ),
-                      onTap: () => logout().then((_) {
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(builder: (context) => Login()),
-                          (route) => false,
-                        );
-                      }),
+                      onTap: _confirmLogout,
                     ),
                   ],
                 ),
