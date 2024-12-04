@@ -1,9 +1,8 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import '../models/book.dart';
 import '../constant.dart';
-import './read_page.dart'; // Import the ReadPage
+import './read_page.dart'; // Import halaman ReadPage
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../screens/login.dart'; // Import halaman Login
@@ -36,9 +35,18 @@ class _HomeState extends State<Home> {
     }
   }
 
+  /// Fungsi Logout: Tidak menghapus token sesi
   Future<void> logout() async {
     SharedPreferences pref = await SharedPreferences.getInstance();
-    await pref.clear(); // Hapus semua data pengguna
+
+    // Hapus hanya data pengguna, bukan token sesi
+    await pref.remove('user_data'); // Contoh: Hapus data pengguna lain
+
+    // Tetap simpan token sesi
+    String? sessionToken = pref.getString('session_token');
+    print('Session token after logout: $sessionToken'); // Untuk debugging
+
+    // Arahkan pengguna ke halaman Login
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (context) => Login()),
       (route) => false,
@@ -52,10 +60,10 @@ class _HomeState extends State<Home> {
         MaterialPageRoute(
           builder: (context) => ReadPage(
             chapters: book.chapters,
-            currentChapterIndex: 0, // Start with the first chapter
+            currentChapterIndex: 0,
             author: book.author,
             coverUrl: book.coverUrl,
-            bookTitle: book.title, // Add the required coverUrl parameter
+            bookTitle: book.title,
           ),
         ),
       );
@@ -83,7 +91,7 @@ class _HomeState extends State<Home> {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: Image.asset(
-                'assets/featured.png', // Gunakan gambar dari folder aset
+                'assets/featured.png', // Gambar dari folder aset
                 fit: BoxFit.cover,
               ),
             ),
@@ -214,7 +222,7 @@ class _HomeState extends State<Home> {
         actions: [
           IconButton(
             icon: Icon(Icons.logout),
-            onPressed: logout, // Panggil fungsi logout saat tombol ditekan
+            onPressed: logout,
           ),
         ],
       ),
